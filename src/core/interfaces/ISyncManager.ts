@@ -1,19 +1,47 @@
 /**
- * Configuration for a specification source
+ * Authentication options for URL sources
  */
-export interface SpecSource {
-  /** Type of the source (URL, file system, or git repository) */
-  type: "url" | "file" | "git";
-  /** Location of the source (URL, file path, or git URL) */
-  location: string;
-  /** Optional authentication configuration */
-  auth?: {
-    /** Type of authentication */
-    type: "basic" | "token" | "oauth2";
-    /** Authentication credentials */
-    credentials: Record<string, string>;
-  };
+export interface UrlAuth {
+  /** Type of authentication */
+  type: "bearer" | "basic" | "custom";
+  /** Position of the auth parameter (only applicable for custom auth) */
+  position?: "header" | "query";
+  /** Authentication value based on type:
+   * - bearer: The bearer token
+   * - basic: { username: string, password: string }
+   * - custom: { name: string, value: string }
+   */
+  value: string | { username: string; password: string } | { name: string; value: string };
 }
+
+/**
+ * File system source configuration
+ */
+export interface FileSpecSource {
+  type: "file";
+  /** Path to the OpenAPI specification file or directory */
+  path: string;
+  /** Unique identifier for the specification, used as filename when saving */
+  specId: string;
+}
+
+/**
+ * URL source configuration
+ */
+export interface UrlSpecSource {
+  type: "url";
+  /** URL of the OpenAPI specification */
+  url: string;
+  /** Unique identifier for the specification, used as filename when saving */
+  specId: string;
+  /** Optional authentication configuration */
+  auth?: UrlAuth;
+}
+
+/**
+ * Union type for all specification sources
+ */
+export type SpecSource = FileSpecSource | UrlSpecSource;
 
 /**
  * Configuration for synchronization
@@ -52,3 +80,4 @@ export interface ISyncManager {
    */
   sync(config: SyncConfig): Promise<SyncResult[]>;
 }
+

@@ -2,11 +2,14 @@ import fs from "fs/promises";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  SpecCatalogEntry,
+  SpecServiceConfig,
+} from "../interfaces/ISpecService";
+import { ConsoleLogger } from "../Logger";
 import { DefaultSpecProcessor } from "../SpecProcessor";
 import { DefaultSpecScanner } from "../SpecScanner";
 import { FileSystemSpecService, SpecServiceError } from "../SpecService";
-import { SpecCatalogEntry, SpecServiceConfig } from "../interfaces/ISpecService";
-import { ConsoleLogger } from "../Logger";
 
 describe("FileSystemSpecService", () => {
   const testDataDir = "test/data";
@@ -16,12 +19,12 @@ describe("FileSystemSpecService", () => {
 
   const createTestConfig = (basePath: string): SpecServiceConfig => ({
     basePath,
-    catalogDir: '_catalog',
-    dereferencedDir: '_dereferenced',
+    catalogDir: "_catalog",
+    dereferencedDir: "_dereferenced",
     cache: {
       maxSize: 100,
-      ttl: 1000 * 60 * 5 // 5 minutes for tests
-    }
+      ttl: 1000 * 60 * 5, // 5 minutes for tests
+    },
   });
 
   beforeEach(async () => {
@@ -34,7 +37,7 @@ describe("FileSystemSpecService", () => {
     const scanner = new DefaultSpecScanner(new DefaultSpecProcessor());
     const config = createTestConfig(testDataDir);
     const logger = new ConsoleLogger();
-    
+
     service = new FileSystemSpecService(scanner, config, logger);
     await service.initialize();
   });
@@ -107,7 +110,6 @@ describe("FileSystemSpecService", () => {
         expect(validSpecs.length).toBeGreaterThan(0);
       } finally {
         // Clean up
-        await fs.unlink(invalidSpecPath);
       }
     });
   });
@@ -234,10 +236,10 @@ describe("FileSystemSpecService", () => {
 
       // Act
       await service.saveSpec(testSpec, "test-api");
-      
+
       // First load - should read from disk
       const firstLoad = await service.loadSpec("test-api");
-      
+
       // Second load - should read from cache
       const secondLoad = await service.loadSpec("test-api");
 
@@ -267,13 +269,13 @@ describe("FileSystemSpecService", () => {
 
       // Act
       await shortTTLService.saveSpec(testSpec, "test-api");
-      
+
       // First load
       const firstLoad = await shortTTLService.loadSpec("test-api");
-      
+
       // Wait for cache to expire
-      await new Promise(resolve => setTimeout(resolve, 10));
-      
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       // Second load - should read from disk due to cache expiration
       const secondLoad = await shortTTLService.loadSpec("test-api");
 
@@ -294,7 +296,7 @@ describe("FileSystemSpecService", () => {
       // Act & Assert
       await expect(service.initialize()).rejects.toThrow(SpecServiceError);
       await expect(service.initialize()).rejects.toMatchObject({
-        code: 'INIT_ERROR'
+        code: "INIT_ERROR",
       });
     });
 
@@ -303,15 +305,19 @@ describe("FileSystemSpecService", () => {
       const scanner = new DefaultSpecScanner(new DefaultSpecProcessor());
       const config = createTestConfig(testDataDir);
       const service = new FileSystemSpecService(scanner, config);
-      
+
       // Make the directory read-only to cause a write failure
       await fs.chmod(dereferencedDir, 0o444);
 
       try {
         // Act & Assert
-        await expect(service.saveSpec({} as OpenAPIV3.Document, "test")).rejects.toThrow(SpecServiceError);
-        await expect(service.saveSpec({} as OpenAPIV3.Document, "test")).rejects.toMatchObject({
-          code: 'PERSIST_ERROR'
+        await expect(
+          service.saveSpec({} as OpenAPIV3.Document, "test")
+        ).rejects.toThrow(SpecServiceError);
+        await expect(
+          service.saveSpec({} as OpenAPIV3.Document, "test")
+        ).rejects.toMatchObject({
+          code: "PERSIST_ERROR",
         });
       } finally {
         // Cleanup - make directory writable again
@@ -321,9 +327,11 @@ describe("FileSystemSpecService", () => {
 
     it("should throw SpecServiceError with correct code for load failures", async () => {
       // Act & Assert
-      await expect(service.loadSpec("non-existent")).rejects.toThrow(SpecServiceError);
+      await expect(service.loadSpec("non-existent")).rejects.toThrow(
+        SpecServiceError
+      );
       await expect(service.loadSpec("non-existent")).rejects.toMatchObject({
-        code: 'LOAD_ERROR'
+        code: "LOAD_ERROR",
       });
     });
   });

@@ -37,9 +37,12 @@ describe('FileSystemSpecService - Explorer', () => {
   });
 
   afterAll(async () => {
-    // Clean up test directories
-    await fs.rm(path.join(testDataDir, '_catalog'), { recursive: true, force: true });
-    await fs.rm(path.join(testDataDir, '_dereferenced'), { recursive: true, force: true });
+    try {
+      await fs.rm(path.join(testDataDir, '_dereferenced'), { recursive: true, force: true });
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn("Failed to clean up test directory:", error);
+    }
   });
 
   describe('findSchemaByName', () => {
